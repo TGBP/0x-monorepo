@@ -34,6 +34,7 @@ const docIdToSubpackageName: { [id: string]: string } = {
     [DocPackages.JSONSchemas]: 'json-schemas',
     [DocPackages.SolCov]: 'sol-cov',
     [DocPackages.Subproviders]: 'subproviders',
+    [DocPackages.OrderUtils]: 'order-utils',
 };
 
 export interface DocPageProps {
@@ -106,6 +107,7 @@ export class DocPage extends React.Component<DocPageProps, DocPageState> {
     }
     private async _fetchJSONDocsFireAndForgetAsync(preferredVersionIfExists?: string): Promise<void> {
         const folderName = docIdToSubpackageName[this.props.docsInfo.id];
+        console.log(folderName);
         const docBucketRoot = isDevelopmentOrStaging
             ? constants.S3_STAGING_DOC_BUCKET_ROOT
             : constants.S3_DOC_BUCKET_ROOT;
