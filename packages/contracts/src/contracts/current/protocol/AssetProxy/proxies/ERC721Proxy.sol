@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "../IAssetProxy.sol";
 import "../../../utils/LibBytes/LibBytes.sol";
@@ -48,10 +48,16 @@ contract ERC721Proxy is
         require(uint8(assetMetadata[0]) == PROXY_ID);
 
         // There exists only 1 of each token.
-        require(amount == 1);
+        require(
+            amount == 1,
+            "Transfer amount must equal 1 for ERC721 tokens."
+        );
 
-        // Decode metadata.
-        require(assetMetadata.length == 53);
+        // Decode metadata
+        require(
+            assetMetadata.length == 53,
+            "ERC721 asset metadata must have a length of 53."
+        );
         address token = readAddress(assetMetadata, 1);
         uint256 tokenId = readUint256(assetMetadata, 21);
 

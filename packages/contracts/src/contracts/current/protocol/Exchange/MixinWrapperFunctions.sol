@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 pragma experimental ABIEncoderV2;
 
 import "../../utils/LibBytes/LibBytes.sol";
@@ -49,7 +49,10 @@ contract MixinWrapperFunctions is
             takerAssetFillAmount,
             signature
         );
-        require(fillResults.takerAssetFilledAmount == takerAssetFillAmount);
+        require(
+            fillResults.takerAssetFilledAmount == takerAssetFillAmount,
+            "takerAssetFilledAmount did not equal takerAssetFillAmount."
+        );
         return fillResults;
     }
 
@@ -327,7 +330,11 @@ contract MixinWrapperFunctions is
         for (uint256 i = 0; i < orders.length; i++) {
 
             // Token being sold by taker must be the same for each order
-            require(areBytesEqual(orders[i].takerAssetData, orders[0].takerAssetData));
+            // TODO: optimize by only using takerAssetData for first order.
+            require(
+                areBytesEqual(orders[i].takerAssetData, orders[0].takerAssetData),
+                "takerAssetData must be the same for each order."
+            );
 
             // Calculate the remaining amount of takerAsset to sell
             uint256 remainingTakerAssetFillAmount = safeSub(takerAssetFillAmount, totalFillResults.takerAssetFilledAmount);
@@ -366,7 +373,11 @@ contract MixinWrapperFunctions is
         for (uint256 i = 0; i < orders.length; i++) {
 
             // Token being sold by taker must be the same for each order
-            require(areBytesEqual(orders[i].takerAssetData, orders[0].takerAssetData));
+            // TODO: optimize by only using takerAssetData for first order.
+            require(
+                areBytesEqual(orders[i].takerAssetData, orders[0].takerAssetData),
+                "takerAssetData must be the same for each order."
+            );
 
             // Calculate the remaining amount of takerAsset to sell
             uint256 remainingTakerAssetFillAmount = safeSub(takerAssetFillAmount, totalFillResults.takerAssetFilledAmount);
@@ -404,7 +415,11 @@ contract MixinWrapperFunctions is
         for (uint256 i = 0; i < orders.length; i++) {
 
             // Token being bought by taker must be the same for each order
-            require(areBytesEqual(orders[i].makerAssetData, orders[0].makerAssetData));
+            // TODO: optimize by only using makerAssetData for first order.
+            require(
+                areBytesEqual(orders[i].makerAssetData, orders[0].makerAssetData),
+                "makerAssetData must be the same for each order."
+            );
 
             // Calculate the remaining amount of makerAsset to buy
             uint256 remainingMakerAssetFillAmount = safeSub(makerAssetFillAmount, totalFillResults.makerAssetFilledAmount);
@@ -451,7 +466,11 @@ contract MixinWrapperFunctions is
         for (uint256 i = 0; i < orders.length; i++) {
 
             // Token being bought by taker must be the same for each order
-            require(areBytesEqual(orders[i].makerAssetData, orders[0].makerAssetData));
+            // TODO: optimize by only using makerAssetData for first order.
+            require(
+                areBytesEqual(orders[i].makerAssetData, orders[0].makerAssetData),
+                "makerAssetData must be the same for each order."
+            );
 
             // Calculate the remaining amount of makerAsset to buy
             uint256 remainingMakerAssetFillAmount = safeSub(makerAssetFillAmount, totalFillResults.makerAssetFilledAmount);

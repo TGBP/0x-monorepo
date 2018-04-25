@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 pragma experimental ABIEncoderV2;
 
 import "./LibFillResults.sol";
@@ -111,9 +111,18 @@ contract MixinExchangeCore is
         // Validate order and maker only if first time seen
         // TODO: Read filled and cancelled only once
         if (filled[orderHash] == 0) {
-            require(order.makerAssetAmount > 0);
-            require(order.takerAssetAmount > 0);
-            require(isValidSignature(orderHash, order.makerAddress, signature));
+            require(
+                order.makerAssetAmount > 0,
+                "Order makerAssetAmount must be greater than 0."
+            );
+            require(
+                order.takerAssetAmount > 0,
+                "Order takerAssetAmount must be greater than 0."
+            );
+            require(
+                isValidSignature(orderHash, order.makerAddress, signature),
+                "Validation of order signature failed."
+            );
         }
         
         // Validate sender is allowed to fill this order
@@ -124,9 +133,15 @@ contract MixinExchangeCore is
         // Validate taker is allowed to fill this order
         address takerAddress = getCurrentContextAddress();
         if (order.takerAddress != address(0)) {
-            require(order.takerAddress == takerAddress);
+            require(
+                order.takerAddress == takerAddress,
+                "Sender is not a valid taker for this order."
+            );
         }
-        require(takerAssetFillAmount > 0);
+        require(
+            takerAssetFillAmount > 0,
+            "Amount being filled must be greater than 0."
+        );
 
         // Validate order expiration
         if (block.timestamp >= order.expirationTimeSeconds) {
@@ -173,17 +188,29 @@ contract MixinExchangeCore is
         bytes32 orderHash = getOrderHash(order);
 
         // Validate the order
-        require(order.makerAssetAmount > 0);
-        require(order.takerAssetAmount > 0);
+        require(
+            order.makerAssetAmount > 0,
+            "Order makerAssetAmount must be greater than 0."
+        );
+        require(
+            order.takerAssetAmount > 0,
+            "Order takerAssetAmount must be greater than 0."
+        );
 
         // Validate sender is allowed to cancel this order
         if (order.senderAddress != address(0)) {
-            require(order.senderAddress == msg.sender);
+            require(
+                order.senderAddress == msg.sender
+                "Sender is not allowed to call `cancelOrder` on this order."
+            );
         }
         
         // Validate transaction signed by maker
         address makerAddress = getCurrentContextAddress();
-        require(order.makerAddress == makerAddress);
+        require(
+            order.makerAddress == makerAddress,
+            "Maker is not allowed to cancel this order."
+        );
         
         if (block.timestamp >= order.expirationTimeSeconds) {
             emit ExchangeError(uint8(Errors.ORDER_EXPIRED), orderHash);
@@ -211,8 +238,11 @@ contract MixinExchangeCore is
     function cancelOrdersUpTo(uint256 salt)
         external
     {
-        uint256 newMakerEpoch = salt + 1;                // makerEpoch is initialized to 0, so to cancelUpTo we need salt+1
-        require(newMakerEpoch > makerEpoch[msg.sender]); // epoch must be monotonically increasing
+        uint256 newMakerEpoch = salt + 1;  // makerEpoch is initialized to 0, so to cancelUpTo we need salt + 1
+        require(
+            newMakerEpoch > makerEpoch[msg.sender],  // epoch must be monotonically increasing
+            "Specified salt must be greater than or equal to existing makerEpoch."
+        );
         makerEpoch[msg.sender] = newMakerEpoch;
         emit CancelUpTo(msg.sender, newMakerEpoch);
     }

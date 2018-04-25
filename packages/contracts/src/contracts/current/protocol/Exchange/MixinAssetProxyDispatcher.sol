@@ -16,7 +16,8 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
+pragma experimental ABIEncoderV2;
 
 import "../../utils/Ownable/Ownable.sol";
 import "../AssetProxy/IAssetProxy.sol";
@@ -43,8 +44,11 @@ contract MixinAssetProxyDispatcher is
     {
         // Do nothing if no amount should be transferred.
         if (amount > 0) {
-            // Lookup asset proxy.
-            require(assetMetadata.length >= 1);
+            // Lookup asset proxy
+            require(
+                assetMetadata.length >= 1,
+                "assetMetadata must have a length greater than or equal to 1."
+            );
             uint8 assetProxyId = uint8(assetMetadata[0]);
             IAssetProxy assetProxy = assetProxies[assetProxyId];
 
@@ -65,15 +69,21 @@ contract MixinAssetProxyDispatcher is
         external
         onlyOwner
     {
-        // Ensure the existing asset proxy is not unintentionally overwritten.
-        require(oldAssetProxy == address(assetProxies[assetProxyId]));
+        // Ensure the existing asset proxy is not unintentionally overwritten
+        require(
+            oldAssetProxy == address(assetProxies[assetProxyId]),
+            "Asset proxy at id does not match the current asset proxy."
+        );
 
         IAssetProxy assetProxy = IAssetProxy(newAssetProxy);
 
         // Ensure that the id of newAssetProxy matches the passed in assetProxyId, unless it is being reset to 0.
         if (newAssetProxy != address(0)) {
             uint8 newAssetProxyId = assetProxy.getProxyId();
-            require(newAssetProxyId == assetProxyId);
+            require(
+                newAssetProxyId == assetProxyId,
+                "New asset proxy id does not match id of the target asset proxy contract."
+            );
         }
 
         // Add asset proxy and log registration.
@@ -89,7 +99,7 @@ contract MixinAssetProxyDispatcher is
         view
         returns (address)
     {
-        IAssetProxy assetProxy = assetProxies[assetProxyId];
-        return address(assetProxy);
+        address assetProxy = address(assetProxies[assetProxyId]);
+        return assetProxy;
     }
 }

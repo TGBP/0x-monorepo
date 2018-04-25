@@ -16,15 +16,18 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 pragma experimental ABIEncoderV2;
 
 import "./mixins/MSignatureValidator.sol";
 import "./ISigner.sol";
+import "../../utils/LibBytes/LibBytes.sol";
 
 /// @dev Provides MSignatureValidator
-contract MixinSignatureValidator is MSignatureValidator {
-
+contract MixinSignatureValidator is
+    MSignatureValidator,
+    LibBytes
+{
     enum SignatureType {
         Illegal, // Default value
         Invalid,
@@ -54,7 +57,10 @@ contract MixinSignatureValidator is MSignatureValidator {
     {
         // TODO: Domain separation: make hash depend on role. (Taker sig should not be valid as maker sig, etc.)
 
-        require(signature.length >= 1);
+        require(
+            signature.length >= 1,
+            "Signature length must be greater than 1."
+        );
         SignatureType signatureType = SignatureType(uint8(signature[0]));
 
         // Variables are not scoped in Solidity
@@ -69,14 +75,17 @@ contract MixinSignatureValidator is MSignatureValidator {
         // it an explicit option. This aids testing and analysis. It is
         // also the initialization value for the enum type.
         if (signatureType == SignatureType.Illegal) {
-            revert();
+            revert("Illegal signature.");
 
         // Always invalid signature
         // Like Illegal, this is always implicitly available and therefore
         // offered explicitly. It can be implicitly created by providing
         // a correctly formatted but incorrect signature.
         } else if (signatureType == SignatureType.Invalid) {
-            require(signature.length == 1);
+            require(
+                signature.length == 1,
+                "'Invalid' signature must have a length of 1."
+            );
             isValid = false;
             return isValid;
 
@@ -89,16 +98,22 @@ contract MixinSignatureValidator is MSignatureValidator {
         // `Caller` for his own signature. Or A and C can sign and B can
         // submit using `Caller`. Having `Caller` allows this flexibility.
         } else if (signatureType == SignatureType.Caller) {
-            require(signature.length == 1);
+            require(
+                signature.length == 1,
+                "'Caller' signature must have a length of 1."
+            );
             isValid = signer == msg.sender;
             return isValid;
 
         // Signed using web3.eth_sign
         } else if (signatureType == SignatureType.Ecrecover) {
-            require(signature.length == 66);
+            require(
+                signature.length == 66,
+                "'Ecrecover' signature must have a length of 66."
+            );
             v = uint8(signature[1]);
-            r = get32(signature, 2);
-            s = get32(signature, 34);
+            r = readBytes32(signature, 2);
+            s = readBytes32(signature, 34);
             recovered = ecrecover(
                 keccak256("\x19Ethereum Signed Message:\n32", hash),
                 v,
@@ -110,10 +125,13 @@ contract MixinSignatureValidator is MSignatureValidator {
 
         // Signature using EIP712
         } else if (signatureType == SignatureType.EIP712) {
-            require(signature.length == 66);
+            require(
+                signature.length == 66,
+                "'EIP712' signature must have a length of 66."
+            );
             v = uint8(signature[1]);
-            r = get32(signature, 2);
-            s = get32(signature, 34);
+            r = readBytes32(signature, 2);
+            s = readBytes32(signature, 34);
             recovered = ecrecover(hash, v, r, s);
             isValid = signer == recovered;
             return isValid;
@@ -127,10 +145,13 @@ contract MixinSignatureValidator is MSignatureValidator {
         // https://github.com/trezor/trezor-mcu/blob/master/firmware/ethereum.c#L602
         // https://github.com/trezor/trezor-mcu/blob/master/firmware/crypto.c#L36
         } else if (signatureType == SignatureType.Trezor) {
-            require(signature.length == 66);
+            require(
+                signature.length == 66,
+                "'Trezor' signature must have a length of 66."
+            );
             v = uint8(signature[1]);
-            r = get32(signature, 2);
-            s = get32(signature, 34);
+            r = readBytes32(signature, 2);
+            s = readBytes32(signature, 34);
             recovered = ecrecover(
                 keccak256("\x19Ethereum Signed Message:\n\x41", hash),
                 v,
@@ -156,7 +177,7 @@ contract MixinSignatureValidator is MSignatureValidator {
         // that we currently support. In this case returning false
         // may lead the caller to incorrectly believe that the
         // signature was invalid.)
-        revert();
+        revert("Specified signature type unsupported.");
     }
 
     /// @dev Approves a hash on-chain using any valid signature type.
@@ -169,24 +190,11 @@ contract MixinSignatureValidator is MSignatureValidator {
         bytes signature)
         external
     {
-        require(isValidSignature(hash, signer, signature));
+        require(
+            isValidSignature(hash, signer, signature),
+            "Signature validation failed, could not preSign hash."
+        );
         preSigned[hash][signer] = true;
-    }
-
-    function get32(bytes memory b, uint256 index)
-        private pure
-        returns (bytes32 result)
-    {
-        require(b.length >= index + 32);
-
-        // Arrays are prefixed by a 256 bit length parameter
-        index += 32;
-
-        // Read the bytes32 from array memory
-        assembly {
-            result := mload(add(b, index))
-        }
-        return result;
     }
 
 }

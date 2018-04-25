@@ -56,12 +56,18 @@ contract MixinTransactions is
         );
 
         // Validate transaction has not been executed
-        require(!transactions[transactionHash]);
+        require(
+            !transactions[transactionHash],
+            "Transaction with identical hash has already been executed."
+        );
 
         // TODO: is SignatureType.Caller necessary if we make this check?
         if (signer != msg.sender) {
             // Validate signature
-            require(isValidSignature(transactionHash, signer, signature));
+            require(
+                isValidSignature(transactionHash, signer, signature),
+                "Validation of transaction signature failed."
+            );
 
             // Set the current transaction signer
             currentContextAddress = signer;
@@ -69,7 +75,10 @@ contract MixinTransactions is
 
         // Execute transaction
         transactions[transactionHash] = true;
-        require(address(this).delegatecall(data));
+        require(
+            address(this).delegatecall(data),
+            "DELEGATECALL of transaction data failed."
+        );
 
         // Reset current transaction signer
         // TODO: Check if gas is paid when currentContextAddress is already 0.

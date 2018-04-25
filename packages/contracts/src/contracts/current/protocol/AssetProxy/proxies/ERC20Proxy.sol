@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "../IAssetProxy.sol";
 import "../../../utils/LibBytes/LibBytes.sol";
@@ -48,12 +48,18 @@ contract ERC20Proxy is
         require(uint8(assetMetadata[0]) == PROXY_ID);
 
         // Decode metadata.
-        require(assetMetadata.length == 21);
+        require(
+            assetMetadata.length == 21,
+            "ERC20 asset metadata must have a length of 21."
+        );
         address token = readAddress(assetMetadata, 1);
 
         // Transfer tokens.
         bool success = IERC20Token(token).transferFrom(from, to, amount);
-        require(success == true);
+        require(
+            success == true,
+            "ERC20 transferFrom failed."
+        );
     }
 
     /// @dev Gets the proxy id associated with the proxy address.
