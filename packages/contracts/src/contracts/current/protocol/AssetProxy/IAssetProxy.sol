@@ -17,6 +17,7 @@
 */
 
 pragma solidity ^0.4.21;
+pragma experimental ABIEncoderV2;
 
 import "../../utils/Authorizable/IAuthorizable.sol";
 
@@ -24,13 +25,25 @@ contract IAssetProxy is IAuthorizable {
 
     /// @dev Transfers assets. Either succeeds or throws.
     /// @param assetMetadata Byte array encoded for the respective asset proxy.
-    /// @param from Address to transfer token from.
-    /// @param to Address to transfer token to.
-    /// @param amount Amount of token to transfer.
+    /// @param from Address to transfer asset from.
+    /// @param to Address to transfer asset to.
+    /// @param amount Amount of asset to transfer.
     function transferFrom(
         bytes assetMetadata,
         address from,
         address to,
         uint256 amount)
         external;
+    
+    /// @dev Makes multiple transfers of assets. Either succeeds or throws.
+    /// @param assetMetadata Array of byte arrays encoded for the respective asset proxy.
+    /// @param from Array of addresses to transfer assets from.
+    /// @param to Array of addresses to transfer assets to.
+    /// @param amounts Array of amounts of assets to transfer.
+    function batchTransferFrom(
+        bytes[] memory assetMetadata,
+        address[] memory from,
+        address[] memory to,
+        uint256[] memory amounts)
+        public;
 }
